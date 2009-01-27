@@ -19,7 +19,7 @@ class Card(object):
   DIAMONDS = 1
   CLUBS = 0
 
-  ACE = 14
+  ACEHI = 14
   KING = 13
   QUEEN = 12
   JACK = 11
@@ -32,6 +32,10 @@ class Card(object):
   FOUR = 4
   THREE = 3
   TWO = 2
+  ACELO = 1
+  # rules engines should set ACE to ACEHI or ACELO to reflect the 
+  # default ordering of the cards if one exists
+  ACE = ACEHI
 
   def __init__(self, suit, rank):
     self._suit = suit
@@ -51,14 +55,19 @@ class Card(object):
 
   @staticmethod
   def Ranks():
-    return xrange(2,15)
+    if Card.ACE == Card.ACELO:
+      return xrange(1, 14)
+    elif Card.ACE == Card.ACEHI:
+      return xrange(2, 15)
+    else:
+      return range(2,14) + [Card.ACE]
 
   @staticmethod
   def RankShort(rank):
-    if rank < 10:
+    if 1 < rank and rank < 10:
       return '%d' % rank
     return {Card.TEN: '0', Card.JACK: 'J', Card.QUEEN: 'Q', Card.KING: 'K',
-            Card.ACE: 'A'}[rank]
+            Card.ACE: 'A', Card.ACEHI: 'A', Card.ACELO: 'A'}[rank]
 
   @staticmethod
   def SuitShort(suit):
