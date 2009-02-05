@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from cards.cardlib_test import *
+from cards.bridge.rules_test import *
 
 import unittest
 
