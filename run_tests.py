@@ -2,6 +2,7 @@
 
 from cards.cardlib_test import *
 from cards.bridge.rules_test import *
+from util import *
 
 import unittest
 
