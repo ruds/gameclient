@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from cards.cardlib_test import *
-from cards.bridge.rules_test import *
-from util import *
+from gameclient.cards.cardlib_test import *
+from gameclient.cards.bridge.rules_test import *
+from gameclient.util import *
 
 import unittest
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright 2009 Matt Rudary (matt@rudary.com)
 
-from cards.bridge import rules
+from gameclient.cards.bridge import rules
 
 import unittest
 

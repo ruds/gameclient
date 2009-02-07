@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # Copyright 2009 Matt Rudary (matt@rudary.com)
 
+from gameclient.cards import cardlib
+
 import random
 import re
 
-from cards import cardlib
-import util
+from gameclient import util
 
 
 class Error(Exception):

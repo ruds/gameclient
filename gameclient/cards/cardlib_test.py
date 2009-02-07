@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # Copyright 2009 Matt Rudary (matt@rudary.com)
 
-from cards import cardlib
+from gameclient.cards import cardlib
+
 import unittest
 
 
