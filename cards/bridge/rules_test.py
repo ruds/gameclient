@@ -37,9 +37,118 @@ class TestCall(unittest.TestCase):
     self.assertEqual(rules.Bid(2, 'C'), rules.Bid(2, 'C'))
     self.failUnless(rules.Bid(3, 'C') < rules.Bid(3, 'D'))
 
+
 class TestRules(unittest.TestCase):
   def setUp(self):
-    self.rules = rules.Rules()
+    self.players = ['N', 'E', 'S', 'W']
+    self.rules = rules.Rules(players=self.players, dealer=0)
+
+  def _MakeAuction(self, calls):
+    auction = []
+    for call in map(rules.NewCall, calls):
+      self.failUnless(self.rules.EvaluateCall(auction, call) is None)
+      auction.append(call)
+    return auction
+
+  def testEvaluateCall(self):
+    self.assertRaises(TypeError, self.rules.EvaluateCall, [], rules.Call())
+
+    auction1 = self._MakeAuction(['-', '-', '-'])
+    # - - - 1H
+    self.failUnless(self.rules.EvaluateCall(auction1, rules.NewCall('1H'))
+                    is None)
+    # - - - -
+    con = self.rules.EvaluateCall(auction1, rules.NewCall('-'))
+    self.failUnless(isinstance(con, rules.Contract))
+    self.assertEqual(con.level, 0)
+    # - - - X
+    self.assertRaises(rules.IllegalDouble,
+                      self.rules.EvaluateCall, auction1, rules.NewCall('X'))
+    # - - - XX
+    self.assertRaises(rules.IllegalDouble,
+                      self.rules.EvaluateCall, auction1, rules.NewCall('XX'))
+
+    auction2 = self._MakeAuction(['1H', '-', '-'])
+    # 1H - - 1H
+    self.assertRaises(rules.InsufficientBid,
+                      self.rules.EvaluateCall, auction2, rules.NewCall('1H'))
+    # 1H - - 1C
+    self.assertRaises(rules.InsufficientBid,
+                      self.rules.EvaluateCall, auction2, rules.NewCall('1C'))
+    # 1H - - 1S
+    self.failUnless(self.rules.EvaluateCall(auction2, rules.NewCall('1S'))
+                    is None)
+    # 1H - - -
+    con = self.rules.EvaluateCall(auction2, rules.NewCall('-'))
+    self.failUnless(isinstance(con, rules.Contract))
+    self.assertEqual(con.level, 1)
+    self.assertEqual(con.strain, 'H')
+    self.assertEqual(con.declarer, self.players[0])
+    self.assertEqual(con.doubled, False)
+    self.assertEqual(con.redoubled, False)
+    # 1H - - X
+    self.failUnless(self.rules.EvaluateCall(auction2, rules.NewCall('X'))
+                    is None)
+    # 1H - - XX
+    self.assertRaises(rules.IllegalDouble,
+                      self.rules.EvaluateCall, auction2, rules.NewCall('XX'))
+
+    auction3 = self._MakeAuction(['1H', 'X', '-'])
+    # 1H X - 1H
+    self.assertRaises(rules.InsufficientBid,
+                      self.rules.EvaluateCall, auction3, rules.NewCall('1H'))
+    # 1H X - 1C
+    self.assertRaises(rules.InsufficientBid,
+                      self.rules.EvaluateCall, auction3, rules.NewCall('1C'))
+    # 1H X - 1S
+    self.failUnless(self.rules.EvaluateCall(auction3, rules.NewCall('1S'))
+                    is None)
+    # 1H X - -
+    self.failUnless(self.rules.EvaluateCall(auction3, rules.NewCall('-'))
+                    is None)
+    # 1H X - X
+    self.assertRaises(rules.IllegalDouble,
+                      self.rules.EvaluateCall, auction3, rules.NewCall('X'))
+    # 1H X - -
+    # XX
+    self.failUnless(self.rules.EvaluateCall(auction3 + [rules.NewCall('-')],
+                                            rules.NewCall('XX'))
+                    is None)
+
+
+    # -  1H X  1S
+    # -  2S -  -
+    # -
+    con = self.rules.EvaluateCall(self._MakeAuction(['-', '1H', 'X', '1S',
+                                                     '-', '2S', '-', '-']),
+                                  rules.NewCall('-'))
+    self.failUnless(isinstance(con, rules.Contract))
+    self.assertEqual(con.level, 2)
+    self.assertEqual(con.strain, 'S')
+    self.assertEqual(con.declarer, self.players[3])
+    self.assertEqual(con.doubled, False)
+    self.assertEqual(con.redoubled, False)
+
+    # -  1H -  1S
+    # -  2N X  -
+    # -  3C -  3N
+    # X  -  -  XX
+    # -  -  -
+    auction4 = self._MakeAuction(['-', '1H', '-', '1S',
+                                  '-', '2N', 'X', '-',
+                                  '-', '3C', '-', '3N',
+                                  'X', '-',  '-', 'XX',
+                                  '-', '-'])
+    con = self.rules.EvaluateCall(auction4, rules.NewCall('-'))
+    self.failUnless(isinstance(con, rules.Contract))
+    self.assertEqual(con.level, 3)
+    self.assertEqual(con.strain, 'N')
+    self.assertEqual(con.declarer, self.players[1])
+    self.assertEqual(con.doubled, False)
+    self.assertEqual(con.redoubled, True)
+    # replace 3rd pass w/ X
+    self.assertRaises(rules.IllegalDouble,
+                      self.rules.EvaluateCall, auction4, rules.NewCall('X'))
 
 if __name__ == '__main__':
   unittest.main()
