@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright 2009 Matt Rudary (matt@rudary.com)
 
-import gameclient.util
+from gameclient import util
 
 import unittest
 
