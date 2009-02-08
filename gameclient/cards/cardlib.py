@@ -14,10 +14,24 @@ class EmptyDeckException(Error):
 
 class Card(object):
   """Represents a playing card."""
-  SPADES = 3
-  HEARTS = 2
-  DIAMONDS = 1
-  CLUBS = 0
+  class Suit(object):
+    def __init__(self, name, abbrev):
+      self.name = name
+      self.abbrev = abbrev
+
+    def __cmp__(self, other):
+      """Somewhat arbitrary, but oh well."""
+      return cmp(self.name, other.name)
+
+    def __str__(self):
+      return self.name
+    def __repr__(self):
+      return 'Suit(%s, %s)' % (self.name, self.abbrev)
+
+  CLUBS = Suit('Clubs', 'C')
+  DIAMONDS = Suit('Diamonds', 'D')
+  HEARTS = Suit('Hearts', 'H')
+  SPADES = Suit('Spades', 'S')
 
   ACEHI = 14
   KING = 13
@@ -38,20 +52,21 @@ class Card(object):
   ACE = ACEHI
 
   def __init__(self, suit, rank):
-    self._suit = suit
-    self._rank = rank
+    """Initialize a Card.
 
-  def suit(self):
-    return self._suit
-  def rank(self):
-    return self._rank
+    Arguments:
+      suit: A Card.Suit object.
+      rank: One of Card.ACE, Card.TWO, ...
+    """
+    self.suit = suit
+    self.rank = rank
 
   def value(self):
-    return (self._suit, self._rank)
+    return (self.suit, self.rank)
 
   @staticmethod
   def Suits():
-    return xrange(4)
+    return [Card.CLUBS, Card.DIAMONDS, Card.HEARTS, Card.SPADES]
 
   @staticmethod
   def Ranks():
@@ -71,8 +86,7 @@ class Card(object):
 
   @staticmethod
   def SuitShort(suit):
-    return {Card.SPADES: 'S', Card.HEARTS: 'H', Card.DIAMONDS: 'D',
-            Card.CLUBS: 'C'}[suit]
+    return suit.abbrev
 
 
 class Deck(object):
@@ -96,6 +110,8 @@ class Deck(object):
 
   def Pick(self, n=None):
     """Take cards off the top of the deck.
+
+    Note: The back of the list is treated as the top of the deck.
 
     Arguments:
       n: An integer; the number of cards to take.

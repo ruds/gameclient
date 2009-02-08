@@ -21,8 +21,8 @@ class TestDeck(unittest.TestCase):
   def testDeck(self):
     self.deck.Shuffle(lambda x, r=None: list.sort(x, key=lambda c: c.value()))
     self.assertEqual(''.join(map(lambda x: ('%c%c' %
-                                            (cardlib.Card.RankShort(x.rank()),
-                                             cardlib.Card.SuitShort(x.suit()))),
+                                            (cardlib.Card.RankShort(x.rank),
+                                             cardlib.Card.SuitShort(x.suit))),
                                  self.deck.Pick(52))),
                      "2C3C4C5C6C7C8C9C0CJCQCKCAC" +
                      "2D3D4D5D6D7D8D9D0DJDQDKDAD" +
