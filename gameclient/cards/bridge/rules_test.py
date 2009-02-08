@@ -5,6 +5,8 @@ from gameclient.cards.bridge import rules
 
 import unittest
 
+from gameclient.cards import cardlib
+
 class TestCall(unittest.TestCase):
   def setUp(self):
     pass
@@ -43,17 +45,17 @@ class TestRules(unittest.TestCase):
     self.players = ['N', 'E', 'S', 'W']
     self.rules = rules.Rules(players=self.players, dealer=0)
 
-  def _MakeAuction(self, calls):
-    auction = []
-    for call in map(rules.NewCall, calls):
-      self.failUnless(self.rules.EvaluateCall(auction, call) is None)
-      auction.append(call)
-    return auction
-
   def testEvaluateCall(self):
+    def MakeAuction(calls):
+      auction = []
+      for call in map(rules.NewCall, calls):
+        self.failUnless(self.rules.EvaluateCall(auction, call) is None)
+        auction.append(call)
+      return auction
+
     self.assertRaises(TypeError, self.rules.EvaluateCall, [], rules.Call())
 
-    auction1 = self._MakeAuction(['-', '-', '-'])
+    auction1 = MakeAuction(['-', '-', '-'])
     # - - - 1H
     self.failUnless(self.rules.EvaluateCall(auction1, rules.NewCall('1H'))
                     is None)
@@ -68,7 +70,7 @@ class TestRules(unittest.TestCase):
     self.assertRaises(rules.IllegalDouble,
                       self.rules.EvaluateCall, auction1, rules.NewCall('XX'))
 
-    auction2 = self._MakeAuction(['1H', '-', '-'])
+    auction2 = MakeAuction(['1H', '-', '-'])
     # 1H - - 1H
     self.assertRaises(rules.InsufficientBid,
                       self.rules.EvaluateCall, auction2, rules.NewCall('1H'))
@@ -93,7 +95,7 @@ class TestRules(unittest.TestCase):
     self.assertRaises(rules.IllegalDouble,
                       self.rules.EvaluateCall, auction2, rules.NewCall('XX'))
 
-    auction3 = self._MakeAuction(['1H', 'X', '-'])
+    auction3 = MakeAuction(['1H', 'X', '-'])
     # 1H X - 1H
     self.assertRaises(rules.InsufficientBid,
                       self.rules.EvaluateCall, auction3, rules.NewCall('1H'))
@@ -119,8 +121,8 @@ class TestRules(unittest.TestCase):
     # -  1H X  1S
     # -  2S -  -
     # -
-    con = self.rules.EvaluateCall(self._MakeAuction(['-', '1H', 'X', '1S',
-                                                     '-', '2S', '-', '-']),
+    con = self.rules.EvaluateCall(MakeAuction(['-', '1H', 'X', '1S',
+                                               '-', '2S', '-', '-']),
                                   rules.NewCall('-'))
     self.failUnless(isinstance(con, rules.Contract))
     self.assertEqual(con.level, 2)
@@ -134,11 +136,11 @@ class TestRules(unittest.TestCase):
     # -  3C -  3N
     # X  -  -  XX
     # -  -  -
-    auction4 = self._MakeAuction(['-', '1H', '-', '1S',
-                                  '-', '2N', 'X', '-',
-                                  '-', '3C', '-', '3N',
-                                  'X', '-',  '-', 'XX',
-                                  '-', '-'])
+    auction4 = MakeAuction(['-', '1H', '-', '1S',
+                            '-', '2N', 'X', '-',
+                            '-', '3C', '-', '3N',
+                            'X', '-',  '-', 'XX',
+                            '-', '-'])
     con = self.rules.EvaluateCall(auction4, rules.NewCall('-'))
     self.failUnless(isinstance(con, rules.Contract))
     self.assertEqual(con.level, 3)
@@ -149,6 +151,24 @@ class TestRules(unittest.TestCase):
     # replace 3rd pass w/ X
     self.assertRaises(rules.IllegalDouble,
                       self.rules.EvaluateCall, auction4, rules.NewCall('X'))
+
+  def testEvaluateTrick(self):
+    def _EvalTrick(cards, leader, strain):
+      c = map(lambda x: cardlib.Card(cardlib.Card.Suit.NewSuit(x[1]),
+                                     cardlib.Card.REVERSE_RANK_MAP[x[0]]),
+              cards)
+      s = rules.Bid.Strain.NewStrain(strain)
+      return self.rules.EvaluateTrick(c, leader, s)
+    self.assertEqual(_EvalTrick(['2H', '3H', '4H', '5H'], 0, 'S'), 3)
+    self.assertEqual(_EvalTrick(['2H', '3H', '4H', '5H'], 2, 'S'), 1)
+    self.assertEqual(_EvalTrick(['2H', '3C', '4H', '5H'], 0, 'S'), 3)
+    self.assertEqual(_EvalTrick(['2H', '3C', '4H', '5H'], 0, 'C'), 1)
+    self.assertEqual(_EvalTrick(['2H', '3C', '4H', '5H'], 0, 'H'), 3)
+    self.assertEqual(_EvalTrick(['2H', '3C', '4H', '5C'], 0, 'H'), 2)
+    self.assertEqual(_EvalTrick(['2H', '3C', '4H', '5C'], 0, 'C'), 3)
+    self.assertEqual(_EvalTrick(['2C', '3H', '4H', '5H'], 0, 'N'), 0)
+    self.assertEqual(_EvalTrick(['AH', '3C', '4H', '5H'], 0, 'N'), 0)
+    
 
 if __name__ == '__main__':
   unittest.main()

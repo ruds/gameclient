@@ -19,6 +19,19 @@ class Card(object):
       self.name = name
       self.abbrev = abbrev
 
+    @staticmethod
+    def NewSuit(abbrev):
+      # TODO(matt): if this becomes a bottleneck, d should be created once
+      # instead of on-the-fly
+      d = dict((s.abbrev, s) for s in Card.Suits())
+      return d[abbrev]
+
+    def __eq__(self, other):
+      if not isinstance(other, Card.Suit):
+        return False
+      return self.name == other.name
+    def __ne__(self, other):
+      return not self == other
     def __cmp__(self, other):
       """Somewhat arbitrary, but oh well."""
       return cmp(self.name, other.name)
@@ -48,8 +61,14 @@ class Card(object):
   TWO = 2
   ACELO = 1
   # rules engines should set ACE to ACEHI or ACELO to reflect the 
-  # default ordering of the cards if one exists
+  # default ordering of the cards if one exists, updating REVERSE_RANK_MAP
+  # as well.
   ACE = ACEHI
+  RANK_MAP = {TEN: '0', JACK: 'J', QUEEN: 'Q', KING: 'K',
+              ACE: 'A', ACEHI: 'A', ACELO: 'A'} 
+  RANK_MAP.update((i, '%d' % i) for i in xrange(1, 10))
+  REVERSE_RANK_MAP = dict((v, k) for k,v in RANK_MAP.iteritems())
+  REVERSE_RANK_MAP[ACE] = 'A'
 
   def __init__(self, suit, rank):
     """Initialize a Card.
@@ -79,14 +98,16 @@ class Card(object):
 
   @staticmethod
   def RankShort(rank):
-    if 1 < rank and rank < 10:
-      return '%d' % rank
-    return {Card.TEN: '0', Card.JACK: 'J', Card.QUEEN: 'Q', Card.KING: 'K',
-            Card.ACE: 'A', Card.ACEHI: 'A', Card.ACELO: 'A'}[rank]
+    return Card.RANK_MAP[rank]
 
   @staticmethod
   def SuitShort(suit):
     return suit.abbrev
+
+  def __str__(self):
+    return '%s%s' % (RankShort(self.rank), SuitShort(self.suit))
+  def __repr__(self):
+    return 'Card(%s, %d)' % (repr(self.suit), self.rank)
 
 
 class Deck(object):
